@@ -63,8 +63,17 @@ def stations():
     return jsonify(stations)
 
 
-# @app.route("/api/v1.0/tobs")
-# def tobs():
+@app.route("/api/v1.0/tobs")
+def tobs():
+    # Query the dates and temperature observations of the most active station for the last year of data.
+    prev_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
+    results = session.query(Measurement.date, Measurement.tobs).filter(Measurement.station == 'USC00519281')\
+                .filter(Measurement.date >= prev_year).all()
+    temps = {date: tobs for date, tobs in results}
+
+    # Return a JSON list of temperature observations (TOBS) for the previous year.
+    date_temp = list(np.ravel(temps))
+    return jsonify(temps)
 
 # @app.route("/api/v1.0/<start>")
 # def start():
