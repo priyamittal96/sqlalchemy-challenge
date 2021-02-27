@@ -37,7 +37,7 @@ def home():
         "/api/v1.0/precipitation<br/>"
         "/api/v1.0/stations<br/>"
         "/api/v1.0/tobs<br/>"
-        "/api/v1.0/<start>/<end><br/>"
+        "/api/v1.0/start/end<br/>"
     )
 
 
@@ -49,6 +49,8 @@ def precipitation():
     # Perform a query to retrieve the data and precipitation scores
     date_prcp = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date >= prev_year).all()
     
+    session.close()
+    
     precipitation = {date: prcp for date, prcp in date_prcp}
     print(precipitation)
     return jsonify(precipitation)
@@ -58,6 +60,8 @@ def precipitation():
 def stations():
     # List the stations
     results = session.query(Station.station).all()
+    
+    session.close()
     stations = list(np.ravel(results))
     
     return jsonify(stations)
@@ -65,21 +69,36 @@ def stations():
 
 @app.route("/api/v1.0/tobs")
 def tobs():
-    # Query the dates and temperature observations of the most active station for the last year of data.
+    # Query the dates and temperature observations of the most active station for the last year of data
     prev_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
     results = session.query(Measurement.date, Measurement.tobs).filter(Measurement.station == 'USC00519281')\
                 .filter(Measurement.date >= prev_year).all()
+        
+    session.close()    
     temps = {date: tobs for date, tobs in results}
 
     # Return a JSON list of temperature observations (TOBS) for the previous year.
     date_temp = list(np.ravel(temps))
     return jsonify(temps)
 
-# @app.route("/api/v1.0/<start>")
-# def start():
-
-# @app.route("/api/v1.0/<start>/<end>")
-# def start_end():
+@app.route("/api/v1.0/<start>")
+@app.route("/api/v1.0/<start>/<end>")
+def start_end(start = None, end = None):
+    sel = [func.min(Measurement.tobs),func.max(Measurement.tobs),func.avg(Measurement.tobs)]
+    
+    if not end: 
+        results = session.query(*sel).filter(Measurement.date >= start).all()
+        
+        session.close()
+        temps = list(np.ravel(results))
+        return jsonify(temps)
+    
+    results = session.query(*sel).filter(Measurement.date >= start)\
+            .filter(Measurement.date <= end).all()
+    
+    session.close()
+    temps = list(np.ravel(results))
+    return jsonify(temps)
 
 
 
