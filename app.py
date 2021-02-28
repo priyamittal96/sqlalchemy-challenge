@@ -79,7 +79,7 @@ def tobs():
 
     # Return a JSON list of temperature observations (TOBS) for the previous year.
     date_temp = list(np.ravel(temps))
-    return jsonify(temps)
+    return jsonify(date_temp)
 
 @app.route("/api/v1.0/<start>")
 @app.route("/api/v1.0/<start>/<end>")
